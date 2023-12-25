@@ -17,8 +17,8 @@ def get_lowest_price(product_name):
     else:
         return None
 
-# Función para procesar el mensaje del usuario
-def process_message(message):
+# Function to process incoming messages
+def handle_incoming_message(message):
     product_name = message.text
     if product_name:
         price = get_lowest_price(product_name)
@@ -27,6 +27,8 @@ def process_message(message):
         else:
             message.reply(f"No se pudo encontrar el precio de {product_name}")
 
-# Interfaz de usuario
-st.title("Precio más bajo en Guatemala")
-chat = message(on_message=process_message)
+# Register the message handler
+message.on_message(handle_incoming_message)
+
+# Create the chat interface
+chat = message()
