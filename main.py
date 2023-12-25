@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_chat import st_chatbot
+from streamlit_chat import st_chat
 import requests
 
 def search_product_price(product_name):
