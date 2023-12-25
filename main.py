@@ -1,6 +1,7 @@
 from bardapi import Bard
 import streamlit as st
 from streamlit_chat import message
+import os
 
 st.title("KHAI")
 st.subheader("Power by BARD")
