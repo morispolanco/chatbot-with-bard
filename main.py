@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 from streamlit_chat import message
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -44,4 +43,4 @@ if int(price) < int(product_price):
     message("Lowest price found: Q{}".format(price))
 else:
     message("Lowest price found on Mercado Libre: {}".format(product_price))
-```
+
