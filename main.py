@@ -1,46 +1,38 @@
 import streamlit as st
-from streamlit_chat import st_chat
+from streamlit_chat import message
 import requests
 
-def search_product_price(product_name):
-    # Configura la URL de la API de Bard para buscar el precio del producto en Guatemala
-    api_url = "https://api.bard.co/v1/products"
-    params = {
-        "country": "GT",  # Guatemala
-        "product": product_name,
-    }
+API_URL = "https://api.example.com/price"
 
-    # Realiza la solicitud a la API
-    response = requests.get(api_url, params=params)
+st.set_page_config(page_title="Buscador de Precios")
 
-    # Verifica si la solicitud fue exitosa (código de estado 200)
-    if response.status_code == 200:
-        data = response.json()
-        # Verifica si se encontraron resultados
-        if data.get("results"):
-            # Devuelve el precio más bajo encontrado
-            return data["results"][0]["price"]
-        else:
-            return "No se encontraron resultados para el producto en Guatemala."
-    else:
-        return "Error al buscar el precio del producto."
+if 'generated' not in st.session_state:
+    st.session_state['generated'] = []
 
-def main():
-    st.title("Búsqueda de Precio Más Bajo en Guatemala")
+if 'past' not in st.session_state:
+    st.session_state['past'] = []
+
+def get_price(product):
+    params = {"product": product, "country": "GT"}
+    response = requests.get(API_URL, params=params)
+    return response.json()["price"]
+
+def get_text():
+    input_text = st.text_input("Tu: ","Hola, busco precio de iPhone 14") 
+    return input_text
+
+user_input = get_text()
+
+if user_input:
+    product = user_input.split()[-1]  
+    price = get_price(product)
+    output = f"El precio más bajo del {product} es {price}"
     
-    # Crea el chatbot de Streamlit
-    chatbot = st_chatbot()
+    st.session_state.past.append(user_input)
+    st.session_state.generated.append(output)
 
-    # Escucha los mensajes del chatbot
-    user_message = st.text_input("Ingrese el nombre del producto:")
-    
-    if user_message:
-        # Muestra el mensaje del usuario en el chat
-        chatbot.user_msg(user_message)
+if st.session_state['generated']:
 
-        # Busca el precio del producto y muestra la respuesta en el chat
-        bot_response = search_product_price(user_message)
-        chatbot.bot_msg(bot_response)
-
-if __name__ == "__main__":
-    main()
+    for i in range(len(st.session_state['generated'])-1, -1, -1):
+        message(st.session_state["past"][i], is_user=True, key=str(i) + '_user')
+        message(st.session_state["generated"][i], key=str(i) + '_bot')
