@@ -1,40 +1,56 @@
+from bardapi import Bard
+import os
 import streamlit as st
-import requests
+from streamlit_chat import message
 
-def get_bard_answer(prompt):
-    url = "https://api.bard.ai/v1/query"
-    params = {
-        "query": prompt,
-        "language": "es",
-        "model": "PaLM2"
-    }
+st.title("KHAI")
+st.subheader("Power by BARD")
+st.caption("Author: Davann Tet")
+st.caption("KHAI")
 
-    try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("result", {}).get("content", "No answer")
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error al obtener respuesta de Bard: {e}")
-        return "Error"
+os.environ['_BARD_API_KEY'] = "bAjcVAWV5diEbSb5Mmhk7u1wV06cKjVc5LMCLyWt4xPnIJTMDrULSF__pa-hcgFusHzTpQ."
+def answer(promt):
+    answer = Bard().get_answer(str(promt))['content']
+    return answer
 
-def main():
-    st.title("Chatbot con Bard")
-    st.caption("Powered by BARD")
+def question():
+    q = st.text_input("What is your question?")
+    return q
 
-    if "qa_history" not in st.session_state:
-        st.session_state.qa_history = []
+if 'answer' not in st.session_state:
+    # st.session_state['answer'] = []
+    with open("answer.json","r") as f:
+        ans = f.read().split("$#$@$")[:-1][::-1]
+        if ans!=[]:
+            st.session_state['answer'] = ans
+        else:
+            st.session_state['answer'] = []
+    
+if 'question' not in st.session_state:
+    # st.session_state['question']=[]
+    with open("question.json","r") as f:
+        que = f.read().split("$#$@$")[:-1][::-1]
+        if que!=[]:
+            st.session_state['question']=que
+        else:
+            st.session_state['question']=[]
+    
 
-    user_question = st.text_input("¿Cuál es tu pregunta?")
+input = question()
 
-    if st.button("Obtener respuesta"):
-        bot_answer = get_bard_answer(user_question)
-        st.session_state.qa_history.append({"question": user_question, "answer": bot_answer})
+if input:
+    ans = answer(input)
+    st.session_state['answer'].insert(0,ans)
+    st.session_state['question'].insert(0,input)
+    with open("answer.json","+a") as f:
+        f.write(str(ans)+"$#$@$")
+        f.close()
+    with open("question.json","+a") as f:
+        f.write(str(input)+"$#$@$")
+        f.close()    
 
-    for entry in st.session_state.qa_history:
-        st.text(f"Pregunta: {entry['question']}")
-        st.text(f"Respuesta: {entry['answer']}")
-        st.markdown("---")
 
-if __name__ == "__main__":
-    main()
+if st.session_state['answer']:
+    for i in range(len(st.session_state['answer'])):
+        message(st.session_state['question'][i],key=str(i)+"user",is_user=True)
+        message(st.session_state['answer'][i],key=str(i)+"bot",is_user=False)
