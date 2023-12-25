@@ -1,46 +1,32 @@
-from bardapi import Bard
-import os
 import streamlit as st
 from streamlit_chat import message
+from requests import get
 
-# Cargar la configuración desde un archivo JSON
-with open('config.json') as config_file:
-    data = json.load(config_file)
-
-# Obtener la clave de la API de Bard desde la configuración
-bard_api_key = os.getenv("BARD_API_KEY")
-
-# Inicializar la API de Bard
-bard = Bard(token=bard_api_key, timeout=30)
-
-# Verificar si 'answer.json' existe y crearlo si no
-if not os.path.exists("answer.json"):
-    with open("answer.json", "w") as f:
-        f.write("")  # Puedes escribir algo inicial si lo deseas
-
-# Función para obtener la respuesta del chatbot
-def get_bard_answer(prompt):
-    try:
-        return bard.get_answer(prompt)['content']
-    except Exception as e:
-        st.error(f"Error al obtener respuesta de Bard: {e}")
+# Función para obtener el precio más bajo de un producto en Guatemala
+def get_lowest_price(product_name):
+    url = "https://api.bard.ai/v1/query"
+    params = {
+        "query": f"precio mas bajo en guatemala de un {product_name}",
+        "language": "es",
+        "model": "PaLM2"
+    }
+    response = get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        return data["result"]["price"]
+    else:
         return None
 
-# Función principal para ejecutar la aplicación
-def main():
-    st.title("Bard Chatbot")
+# Función para procesar el mensaje del usuario
+def process_message(message):
+    product_name = message.text
+    if product_name:
+        price = get_lowest_price(product_name)
+        if price is not None:
+            message.reply(f"El precio más bajo de {product_name} en Guatemala es de Q{price}")
+        else:
+            message.reply(f"No se pudo encontrar el precio de {product_name}")
 
-    # Resto del código...
-
-    # Botón para enviar la pregunta al chatbot
-    if st.button("Enviar Pregunta"):
-        user_question = st.text_input("Pregunta al Chatbot:")
-        if user_question:
-            bot_answer = get_bard_answer(user_question)
-            if bot_answer is not None:
-                st.success(f"Respuesta del Chatbot: {bot_answer}")
-            else:
-                st.error("No se pudo obtener una respuesta del Chatbot")
-
-if __name__ == "__main__":
-    main()
+# Interfaz de usuario
+st.title("Precio más bajo en Guatemala")
+chat = message(on_message=process_message)
