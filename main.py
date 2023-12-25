@@ -8,7 +8,7 @@ st.subheader("Power by BARD")
 st.caption("Author: Davann Tet")
 st.caption("KHAI")
 
-os.environ['_BARD_API_KEY'] = "bAjcVAWV5diEbSb5Mmhk7u1wV06cKjVc5LMCLyWt4xPnIJTMDrULSF__pa-hcgFusHzTpQ."
+os.environ['_BARD_API_KEY'] = "ABTWhQF55IO_Kq_Uc1Knk24BEfyjWjSVyMZ1yuRIL3IKNhpeyBlsjMhTkWrXllgR_gQxQVekQCaW"
 def answer(promt):
     answer = Bard().get_answer(str(promt))['content']
     return answer
