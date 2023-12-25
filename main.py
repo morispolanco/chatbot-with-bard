@@ -1,46 +1,46 @@
 import streamlit as st
-from streamlit_chat import message
-from google_auth_oauthlib.flow import InstalledAppFlow
-from bs4 import BeautifulSoup
+from streamlit_chat import st_chatbot
 import requests
-import re
 
-# Define the BARD API's endpoint and parameters
-bard_endpoint = "https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generateText?key={{API_KEY}}"
-bard_params = {
-    "prompt": {
-        "text": "Find the lowest price for [product name] in Guatemala.",
-        "model_parameters": {
-            "temperature": 0.7
-        }
+def search_product_price(product_name):
+    # Configura la URL de la API de Bard para buscar el precio del producto en Guatemala
+    api_url = "https://api.bard.co/v1/products"
+    params = {
+        "country": "GT",  # Guatemala
+        "product": product_name,
     }
-}
 
-# Set up Streamlit components
-st.title("Lowest Price Finder")
-product_name = st.text_input("Product Name:")
-st.write("Searching...")
+    # Realiza la solicitud a la API
+    response = requests.get(api_url, params=params)
 
-# Use BARD API to find the product's lowest price in Guatemala
-response = requests.post(bard_endpoint, json=bard_params)
-result = response.json()
-price_response = result["candidates"][0]["output"]
+    # Verifica si la solicitud fue exitosa (código de estado 200)
+    if response.status_code == 200:
+        data = response.json()
+        # Verifica si se encontraron resultados
+        if data.get("results"):
+            # Devuelve el precio más bajo encontrado
+            return data["results"][0]["price"]
+        else:
+            return "No se encontraron resultados para el producto en Guatemala."
+    else:
+        return "Error al buscar el precio del producto."
 
-# Extract the price from the BARD response
-price = re.findall(r"Q(\d+)", price_response)[0]
+def main():
+    st.title("Búsqueda de Precio Más Bajo en Guatemala")
+    
+    # Crea el chatbot de Streamlit
+    chatbot = st_chatbot()
 
-# Use BeautifulSoup to scrape the product's price from a popular Guatemalan e-commerce site
-url = "https://www.mercadolibre.com.gt/ofertas"
-headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.114 Safari/537.36"}
-response = requests.get(url, headers=headers)
-soup = BeautifulSoup(response.text, "html.parser")
+    # Escucha los mensajes del chatbot
+    user_message = st.text_input("Ingrese el nombre del producto:")
+    
+    if user_message:
+        # Muestra el mensaje del usuario en el chat
+        chatbot.user_msg(user_message)
 
-# Find the product's price on the website
-product_price = soup.find("span", class_="price-tag-amount").text.strip()
+        # Busca el precio del producto y muestra la respuesta en el chat
+        bot_response = search_product_price(user_message)
+        chatbot.bot_msg(bot_response)
 
-# Compare the BARD and website prices and display the lowest one
-if int(price) < int(product_price):
-    message("Lowest price found: Q{}".format(price))
-else:
-    message("Lowest price found on Mercado Libre: {}".format(product_price))
-
+if __name__ == "__main__":
+    main()
