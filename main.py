@@ -1,5 +1,4 @@
 from bardapi import Bard
-import os
 import streamlit as st
 from streamlit_chat import message
 
@@ -8,49 +7,26 @@ st.subheader("Power by BARD")
 st.caption("Author: Davann Tet")
 st.caption("KHAI")
 
+# Configurar la clave de la API de Bard
 os.environ['_BARD_API_KEY'] = "bAjcVAWV5diEbSb5Mmhk7u1wV06cKjVc5LMCLyWt4xPnIJTMDrULSF__pa-hcgFusHzTpQ."
-def answer(promt):
-    answer = Bard().get_answer(str(promt))['content']
-    return answer
 
-def question():
-    q = st.text_input("What is your question?")
-    return q
+def get_bard_answer(prompt):
+    return Bard().get_answer(prompt)['content']
 
-if 'answer' not in st.session_state:
-    # st.session_state['answer'] = []
-    with open("answer.json","r") as f:
-        ans = f.read().split("$#$@$")[:-1][::-1]
-        if ans!=[]:
-            st.session_state['answer'] = ans
-        else:
-            st.session_state['answer'] = []
-    
-if 'question' not in st.session_state:
-    # st.session_state['question']=[]
-    with open("question.json","r") as f:
-        que = f.read().split("$#$@$")[:-1][::-1]
-        if que!=[]:
-            st.session_state['question']=que
-        else:
-            st.session_state['question']=[]
-    
+def main():
+    if 'qa_history' not in st.session_state:
+        st.session_state['qa_history'] = []
 
-input = question()
+    user_question = st.text_input("What is your question?")
 
-if input:
-    ans = answer(input)
-    st.session_state['answer'].insert(0,ans)
-    st.session_state['question'].insert(0,input)
-    with open("answer.json","+a") as f:
-        f.write(str(ans)+"$#$@$")
-        f.close()
-    with open("question.json","+a") as f:
-        f.write(str(input)+"$#$@$")
-        f.close()    
+    if user_question:
+        bot_answer = get_bard_answer(user_question)
+        st.session_state['qa_history'].insert(0, {'question': user_question, 'answer': bot_answer})
 
+    if st.session_state['qa_history']:
+        for idx, entry in enumerate(st.session_state['qa_history']):
+            message(entry['question'], key=f"{idx}user", is_user=True)
+            message(entry['answer'], key=f"{idx}bot", is_user=False)
 
-if st.session_state['answer']:
-    for i in range(len(st.session_state['answer'])):
-        message(st.session_state['question'][i],key=str(i)+"user",is_user=True)
-        message(st.session_state['answer'][i],key=str(i)+"bot",is_user=False)
+if __name__ == "__main__":
+    main()
