@@ -3,54 +3,39 @@ import os
 import streamlit as st
 from streamlit_chat import message
 
-st.title("KHAI")
-st.subheader("Power by BARD")
-st.caption("Author: Davann Tet")
-st.caption("KHAI")
+# Cargar la configuración desde un archivo JSON
+with open('config.json') as config_file:
+    data = json.load(config_file)
 
-os.environ['_BARD_API_KEY'] = "ABTWhQF55IO_Kq_Uc1Knk24BEfyjWjSVyMZ1yuRIL3IKNhpeyBlsjMhTkWrXllgR_gQxQVekQCaW"
-def answer(promt):
-    answer = Bard().get_answer(str(promt))['content']
-    return answer
+# Obtener la clave de la API de Bard desde la configuración
+bard_api_key = os.getenv("BARD_API_KEY")
 
-def question():
-    q = st.text_input("What is your question?")
-    return q
+# Inicializar la API de Bard
+bard = Bard(token=bard_api_key, timeout=30)
 
-if 'answer' not in st.session_state:
-    # st.session_state['answer'] = []
-    with open("answer.json","r") as f:
-        ans = f.read().split("$#$@$")[:-1][::-1]
-        if ans!=[]:
-            st.session_state['answer'] = ans
-        else:
-            st.session_state['answer'] = []
-    
-if 'question' not in st.session_state:
-    # st.session_state['question']=[]
-    with open("question.json","r") as f:
-        que = f.read().split("$#$@$")[:-1][::-1]
-        if que!=[]:
-            st.session_state['question']=que
-        else:
-            st.session_state['question']=[]
-    
+# Función para obtener la respuesta del chatbot
+def get_bard_answer(prompt):
+    try:
+        return bard.get_answer(prompt)['content']
+    except Exception as e:
+        st.error(f"Error al obtener respuesta de Bard: {e}")
+        return None
 
-input = question()
+# Función principal para ejecutar la aplicación
+def main():
+    st.title("Bard Chatbot")
 
-if input:
-    ans = answer(input)
-    st.session_state['answer'].insert(0,ans)
-    st.session_state['question'].insert(0,input)
-    with open("answer.json","+a") as f:
-        f.write(str(ans)+"$#$@$")
-        f.close()
-    with open("question.json","+a") as f:
-        f.write(str(input)+"$#$@$")
-        f.close()    
+    # Resto del código...
 
+    # Botón para enviar la pregunta al chatbot
+    if st.button("Enviar Pregunta"):
+        user_question = st.text_input("Pregunta al Chatbot:")
+        if user_question:
+            bot_answer = get_bard_answer(user_question)
+            if bot_answer is not None:
+                st.success(f"Respuesta del Chatbot: {bot_answer}")
+            else:
+                st.error("No se pudo obtener una respuesta del Chatbot")
 
-if st.session_state['answer']:
-    for i in range(len(st.session_state['answer'])):
-        message(st.session_state['question'][i],key=str(i)+"user",is_user=True)
-        message(st.session_state['answer'][i],key=str(i)+"bot",is_user=False)
+if __name__ == "__main__":
+    main()
