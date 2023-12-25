@@ -1,3 +1,3 @@
 streamlit
 bardapi
-streamlit-chat
+streamlitchat
